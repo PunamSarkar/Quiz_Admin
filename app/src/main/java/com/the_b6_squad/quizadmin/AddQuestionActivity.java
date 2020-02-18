@@ -1,9 +1,5 @@
 package com.the_b6_squad.quizadmin;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.View;
@@ -14,6 +10,9 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
@@ -21,17 +20,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.HashMap;
 import java.util.UUID;
 
+
 public class AddQuestionActivity extends AppCompatActivity {
 
     private EditText question;
     private RadioGroup options;
     private LinearLayout answers;
     private Button uploadBtn;
-    private String CategoryName;
+    private String categoryName;
     private int setNO;
-    private  Dialog loadingDialog;
+    private Dialog loadingDialog;
 
-    @SuppressLint("WrongViewCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,10 +44,10 @@ public class AddQuestionActivity extends AppCompatActivity {
 
         question = findViewById(R.id.question);
         options = findViewById(R.id.options);
-        answers = findViewById(R.id.answer);
+        answers = findViewById(R.id.answers);
         uploadBtn = findViewById(R.id.button2);
 
-        CategoryName = getIntent().getStringExtra("CategoryName");
+        categoryName = getIntent().getStringExtra("categoryName");
         setNO = getIntent().getIntExtra("setNO",-1);
         if (setNO == -1){
             finish();
@@ -57,7 +56,7 @@ public class AddQuestionActivity extends AppCompatActivity {
 
         uploadBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 if (question.getText().toString().isEmpty()){
                     question.setError("Required");
                     return;
@@ -65,12 +64,13 @@ public class AddQuestionActivity extends AppCompatActivity {
                 upload();
             }
         });
+
     }
 
     private void upload(){
 
         int correct = -1;
-        for (int i = 0; i < options.getChildCount();i++){
+        for (int i = 0;i <options.getChildCount();i++){
 
             EditText answer = (EditText) answers.getChildAt(i);
             if (answer.getText().toString().isEmpty()){
@@ -90,7 +90,7 @@ public class AddQuestionActivity extends AppCompatActivity {
         }
 
         final HashMap<String,Object> map = new HashMap<>();
-        map.put("correctANS",((EditText)answers.getChildAt(0)).getText().toString());
+        map.put("correctANS",((EditText)answers.getChildAt(correct)).getText().toString());
         map.put("optionD",((EditText)answers.getChildAt(3)).getText().toString());
         map.put("optionC",((EditText)answers.getChildAt(2)).getText().toString());
         map.put("optionB",((EditText)answers.getChildAt(1)).getText().toString());
@@ -101,28 +101,32 @@ public class AddQuestionActivity extends AppCompatActivity {
         final String id = UUID.randomUUID().toString();
 
         loadingDialog.show();
+
         FirebaseDatabase.getInstance().getReference()
-                .child("SETS").child(CategoryName)
+                .child("SETS").child(categoryName)
                 .child("questions").child(id)
                 .setValue(map).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()){
-                    QuestionModel questionModel = new QuestionModel(id,map.get("question").toString()
-                    ,map.get("optionA").toString(),map.get("optionB").toString(),map.get("optionC").toString(),map.get("optionD").toString(),
-                    map.get("correctANS").toString(),
-                            (int) map.get("setNO"));
 
+                if (task.isSuccessful()){
+
+                    QuestionModel questionModel = new QuestionModel(id, map.get("question").toString(),
+                            map.get("optionA").toString(),
+                            map.get("optionB").toString(),
+                            map.get("optionC").toString(),
+                            map.get("optionD").toString(),
+                            map.get("correctANS").toString(),
+                            (int)map.get("setNo"));
 
                     QuestionsActivity.list.add(questionModel);
                     finish();
-                }
-                else {
+
+                }else {
                     Toast.makeText(AddQuestionActivity.this, "Something went wrong!", Toast.LENGTH_SHORT).show();
                 }
                 loadingDialog.dismiss();
             }
         });
-
     }
 }
